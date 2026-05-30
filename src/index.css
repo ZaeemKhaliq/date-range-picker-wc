@@ -1,0 +1,14 @@
+/* #date-range-picker-wc::part(calendar-date-cell):hover {
+  background-color: rgba(0, 0, 255, 0.15);
+}
+
+#date-range-picker-wc::part(calendar-date-cell--highlighted)::before {
+  background-color: rgba(0, 0, 255, 0.15);
+}
+
+#date-range-picker-wc::part(calendar-grid-cell--selected) {
+  background-color: blue;
+}
+#date-range-picker-wc::part(calendar-grid-cell--selected):hover {
+  background-color: blue;
+} */

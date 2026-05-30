@@ -1,0 +1,518 @@
+{
+  "schemaVersion": "1.0.0",
+  "readme": "",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "src/constants.ts",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "ComponentExposedAttributes",
+          "type": {
+            "text": "object"
+          },
+          "default": "{ START_DATE: \"start-date\", END_DATE: \"end-date\", LABEL_FORMAT_FOR_DAYS: \"label-format-for-days\", RANGE_PREVIEW_BORDER_COLOR: \"range-preview-border-color\", HIDE_CLEAR_BUTTON: \"hide-clear-button\", }"
+        },
+        {
+          "kind": "variable",
+          "name": "CustomEventsIDs",
+          "type": {
+            "text": "object"
+          },
+          "default": "{ ON_DATE_SELECT: \"date-range-picker-wc:on-date-select\", }"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "ComponentExposedAttributes",
+          "declaration": {
+            "name": "ComponentExposedAttributes",
+            "module": "src/constants.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "CustomEventsIDs",
+          "declaration": {
+            "name": "CustomEventsIDs",
+            "module": "src/constants.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "OnDateSelectDetail",
+          "declaration": {
+            "name": "OnDateSelectDetail",
+            "module": "src/constants.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/date-range-picker-wc.ts",
+      "declarations": [
+        {
+          "kind": "class",
+          "description": "",
+          "name": "DateRangePickerWc",
+          "members": [
+            {
+              "kind": "field",
+              "name": "calendarPopoverRef",
+              "type": {
+                "text": "Ref<HTMLElement>"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "_segmentDigits",
+              "type": {
+                "text": "string[]"
+              },
+              "default": "[\"\", \"\", \"\", \"\", \"\", \"\"]"
+            },
+            {
+              "kind": "field",
+              "name": "_activeSegmentIdx",
+              "type": {
+                "text": "number"
+              },
+              "default": "-1"
+            },
+            {
+              "kind": "field",
+              "name": "_activeSegmentTypedCount",
+              "type": {
+                "text": "number"
+              },
+              "default": "0"
+            },
+            {
+              "kind": "field",
+              "name": "startDate",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "undefined",
+              "attribute": "startDate"
+            },
+            {
+              "kind": "field",
+              "name": "endDate",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "undefined",
+              "attribute": "endDate"
+            },
+            {
+              "kind": "field",
+              "name": "labelFormatForDays",
+              "type": {
+                "text": "\"ddd\" | \"d\""
+              },
+              "default": "\"ddd\"",
+              "attribute": "labelFormatForDays"
+            },
+            {
+              "kind": "field",
+              "name": "rangePreviewBorderColor",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "\"black\"",
+              "attribute": "rangePreviewBorderColor"
+            },
+            {
+              "kind": "field",
+              "name": "hideClearButton",
+              "type": {
+                "text": "boolean | undefined"
+              },
+              "default": "false",
+              "attribute": "hideClearButton"
+            },
+            {
+              "kind": "field",
+              "name": "_currentSelectedDate",
+              "type": {
+                "text": "string"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "_mouseOveredDate",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "undefined"
+            },
+            {
+              "kind": "field",
+              "name": "_dateInputFieldElem",
+              "type": {
+                "text": "HTMLInputElement"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "_calendarGridDaysContainerElem",
+              "type": {
+                "text": "HTMLElement"
+              }
+            },
+            {
+              "kind": "field",
+              "name": "_yearSelectorContainerPopoverElem",
+              "type": {
+                "text": "HTMLElement"
+              }
+            },
+            {
+              "kind": "method",
+              "name": "_emitCustomEvent",
+              "privacy": "private",
+              "parameters": [
+                {
+                  "name": "{\n    name,\n    detail,\n  }",
+                  "type": {
+                    "text": "{\n    name: string;\n    detail?: object;\n  }"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "field",
+              "name": "_currentSelectedDateDetails",
+              "readonly": true
+            },
+            {
+              "kind": "method",
+              "name": "_moveToNextMonth"
+            },
+            {
+              "kind": "method",
+              "name": "_moveToPreviousMonth"
+            },
+            {
+              "kind": "method",
+              "name": "_buildInputValue",
+              "return": {
+                "type": {
+                  "text": "string"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "_getSegmentIndex",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "cursorPos",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_getFirstIncompleteSegmentIndex",
+              "return": {
+                "type": {
+                  "text": "number"
+                }
+              }
+            },
+            {
+              "kind": "method",
+              "name": "_setSelection",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "inputElem",
+                  "type": {
+                    "text": "HTMLInputElement"
+                  }
+                },
+                {
+                  "name": "segIdx",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_activateSegment",
+              "return": {
+                "type": {
+                  "text": "void"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "inputElem",
+                  "type": {
+                    "text": "HTMLInputElement"
+                  }
+                },
+                {
+                  "name": "segIdx",
+                  "type": {
+                    "text": "number"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_parseDateFromSegments",
+              "return": {
+                "type": {
+                  "text": "Date | null"
+                }
+              },
+              "parameters": [
+                {
+                  "name": "yearDigits",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "monthDigits",
+                  "type": {
+                    "text": "string"
+                  }
+                },
+                {
+                  "name": "dayDigits",
+                  "type": {
+                    "text": "string"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_handleInputFocus",
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_handleInputBlur",
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "Event"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_handleInputClick",
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "MouseEvent"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_handleInputKeydown",
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "KeyboardEvent"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_renderCurrentMonthGrid"
+            },
+            {
+              "kind": "method",
+              "name": "_handleCalendarPopoverToggle",
+              "parameters": [
+                {
+                  "name": "event",
+                  "type": {
+                    "text": "ToggleEvent"
+                  }
+                }
+              ]
+            },
+            {
+              "kind": "method",
+              "name": "_onClearClick"
+            }
+          ],
+          "events": [
+            {
+              "name": "name",
+              "type": {
+                "text": "CustomEvent"
+              }
+            }
+          ],
+          "attributes": [
+            {
+              "name": "startDate",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "undefined",
+              "fieldName": "startDate"
+            },
+            {
+              "name": "endDate",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "undefined",
+              "fieldName": "endDate"
+            },
+            {
+              "name": "labelFormatForDays",
+              "type": {
+                "text": "\"ddd\" | \"d\""
+              },
+              "default": "\"ddd\"",
+              "fieldName": "labelFormatForDays"
+            },
+            {
+              "name": "rangePreviewBorderColor",
+              "type": {
+                "text": "string | undefined"
+              },
+              "default": "\"black\"",
+              "fieldName": "rangePreviewBorderColor"
+            },
+            {
+              "name": "hideClearButton",
+              "type": {
+                "text": "boolean | undefined"
+              },
+              "default": "false",
+              "fieldName": "hideClearButton"
+            }
+          ],
+          "superclass": {
+            "name": "LitElement",
+            "package": "lit"
+          },
+          "tagName": "date-range-picker-wc",
+          "customElement": true
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "DateRangePickerWc",
+          "declaration": {
+            "name": "DateRangePickerWc",
+            "module": "src/date-range-picker-wc.ts"
+          }
+        },
+        {
+          "kind": "custom-element-definition",
+          "name": "date-range-picker-wc",
+          "declaration": {
+            "name": "DateRangePickerWc",
+            "module": "src/date-range-picker-wc.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/mainStyles.ts",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "mainStyles",
+          "default": "css` *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif, serif; } .input-container { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; width: max-content; border: 1px solid black; border-radius: 0.25rem; padding-inline: 8px; margin-left: 5rem; } .date-input-field { border: none; outline: none; min-width: 15rem; font-size: 0.875rem; } .calendar-icon-button { all: unset; display: flex; padding: 6px; border-radius: 100%; cursor: pointer; transition: all 0.15s ease; } .calendar-icon-button:focus { background-color: rgba(0, 0, 0, 0.1); } .calendar-popover { border-radius: 0.5rem; width: max-content; box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 0.2), 0px 8px 10px 1px rgba(0, 0, 0, 0.14), 0px 3px 14px 2px rgba(0, 0, 0, 0.12); border: none; padding: 8px; overflow: hidden; } .calendar-popover:popover-open { display: flex; } #calendar-popover { margin: 0; inset: auto; top: calc(anchor(bottom) + 0.5rem); justify-self: anchor-center; position-try-fallbacks: flip-block, flip-inline; opacity: 0; transition: all 0.2s allow-discrete; } #calendar-popover:popover-open { opacity: 1; } @starting-style { #calendar-popover:popover-open { opacity: 0; } } .calendar-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; } .year-button { all: unset; display: flex; align-items: center; cursor: pointer; } #year-selector-container { top: anchor(bottom); left: anchor(left); border: 1px solid silver; padding: 8px 0px; } .years-container { display: flex; flex-direction: column; max-height: 20rem; overflow-y: auto; gap: 0.25rem; } .year-option { all: unset; padding: 8px; cursor: pointer; transition: all 0.1s ease; } .year-option:hover { background-color: rgba(0, 0, 0, 0.15); } .year-option--selected { background-color: rgba(0, 0, 0, 0.15); } .calendar-month-change-icon-container { border-radius: 100%; height: 2.5rem; width: 2.5rem; transition: all 0.15s ease; display: flex; align-items: center; justify-content: center; } .calendar-month-change-icon-container:hover { background-color: rgba(0, 0, 0, 0.1); cursor: pointer; } .calendar-grid-wrapper { max-width: 21.875rem; height: 19.375rem; } .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 0.25rem; /* animation: slide-in 0.15s linear; */ } #calendar-grid-days-container { } .calendar-grid-cell { height: 2.5rem; width: 2.5rem; font-size: 0.875rem; display: flex; justify-content: center; align-items: center; border-radius: 100%; transition: all 0.15s ease; } .calendar-grid-cell:hover { background-color: rgba(0, 0, 0, 0.1); cursor: pointer; } .calendar-grid-cell--empty, .calendar-grid-cell--column-cell { pointer-events: none; } .calendar-grid-cell--column-cell { font-weight: 700; } .calendar-grid-cell--current-day { border: 1px solid black; border-radius: 100%; } .calendar-grid-cell--selected { background-color: grey; color: white; } .calendar-grid-cell--selected:hover { background-color: grey; } .calendar-date-cell--highlighted { position: relative; /* background-color: rgba(0, 0, 0, 0.15); */ } .calendar-date-cell--highlighted::before { position: absolute; content: \"\"; left: 0; top: 0; background-color: rgba(0, 0, 0, 0.15); height: 100%; width: 100%; } .calendar-date-cell--highlighted-row-cell-first::before { border-top-left-radius: 1.5rem; border-bottom-left-radius: 1.5rem; } .calendar-date-cell--highlighted-row-cell-last::before { border-top-right-radius: 1.5rem; border-bottom-right-radius: 1.5rem; } .clear-button-container { padding: 8px; } .clear-selections-button { all: unset; color: black; font-weight: 700; cursor: pointer; font-size: 0.875rem; } .clear-selections-button:disabled { opacity: 0.4; pointer-events: none; } @keyframes slide-left { 0% { transform: translateX(0%); } 49% { transform: translateX(-100%); } 50% { opacity: 0; transform: translateX(100%); } 100% { opacity: 1; transform: translateX(0%); } } @keyframes slide-right { 0% { transform: translateX(0%); } 49% { transform: translateX(100%); } 50% { opacity: 0; transform: translateX(-100%); } 100% { opacity: 1; transform: translateX(0%); } } `"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "mainStyles",
+          "declaration": {
+            "name": "mainStyles",
+            "module": "src/mainStyles.ts"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "javascript-module",
+      "path": "src/utils.ts",
+      "declarations": [
+        {
+          "kind": "variable",
+          "name": "MonthIndexToMonthNameMap",
+          "type": {
+            "text": "{\r\n  0: \"January\",\r\n  1: \"February\",\r\n  2: \"March\",\r\n  3: \"April\",\r\n  4: \"May\",\r\n  5: \"June\",\r\n  6: \"July\",\r\n  7: \"August\",\r\n  8: \"September\",\r\n  9: \"October\",\r\n  10: \"November\",\r\n  11: \"December\",\r\n}"
+          },
+          "default": "{ 0: \"January\", 1: \"February\", 2: \"March\", 3: \"April\", 4: \"May\", 5: \"June\", 6: \"July\", 7: \"August\", 8: \"September\", 9: \"October\", 10: \"November\", 11: \"December\", }"
+        },
+        {
+          "kind": "variable",
+          "name": "DayLabelFormatOptionToLabelMap",
+          "type": {
+            "text": "{\r\n  d: {\r\n    MONDAY: \"M\",\r\n    TUESDAY: \"T\",\r\n    WEDNESDAY: \"W\",\r\n    THURSDAY: \"T\",\r\n    FRIDAY: \"F\",\r\n    SATURDAY: \"S\",\r\n    SUNDAY: \"S\",\r\n  },\r\n  ddd: {\r\n    MONDAY: \"Mon\",\r\n    TUESDAY: \"Tue\",\r\n    WEDNESDAY: \"Wed\",\r\n    THURSDAY: \"Thu\",\r\n    FRIDAY: \"Fri\",\r\n    SATURDAY: \"Sat\",\r\n    SUNDAY: \"Sun\",\r\n  },\r\n}"
+          },
+          "default": "{ d: { MONDAY: \"M\", TUESDAY: \"T\", WEDNESDAY: \"W\", THURSDAY: \"T\", FRIDAY: \"F\", SATURDAY: \"S\", SUNDAY: \"S\", }, ddd: { MONDAY: \"Mon\", TUESDAY: \"Tue\", WEDNESDAY: \"Wed\", THURSDAY: \"Thu\", FRIDAY: \"Fri\", SATURDAY: \"Sat\", SUNDAY: \"Sun\", }, }"
+        }
+      ],
+      "exports": [
+        {
+          "kind": "js",
+          "name": "MonthIndexToMonthNameMap",
+          "declaration": {
+            "name": "MonthIndexToMonthNameMap",
+            "module": "src/utils.ts"
+          }
+        },
+        {
+          "kind": "js",
+          "name": "DayLabelFormatOptionToLabelMap",
+          "declaration": {
+            "name": "DayLabelFormatOptionToLabelMap",
+            "module": "src/utils.ts"
+          }
+        }
+      ]
+    }
+  ]
+}
