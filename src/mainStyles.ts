@@ -170,7 +170,7 @@ export const mainStyles = css`
     transition: all 0.15s ease;
   }
   .calendar-grid-cell:focus {
-    border: 1px solid black;
+    outline: 2px solid black;
   }
   .calendar-grid-cell:hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -216,6 +216,11 @@ export const mainStyles = css`
     border-bottom-right-radius: 1.5rem;
   }
 
+  .calendar-date-cell--disabled {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
   .clear-button-container {
     padding: 8px;
     display: flex;
@@ -227,6 +232,7 @@ export const mainStyles = css`
     font-weight: 700;
     cursor: pointer;
     font-size: 0.875rem;
+    border: 1px solid transparent;
   }
   .clear-selections-button:focus {
     border: 1px solid black;

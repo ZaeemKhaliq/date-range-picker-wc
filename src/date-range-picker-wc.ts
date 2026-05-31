@@ -9,6 +9,7 @@ import {
 } from "./utils";
 import { mainStyles } from "./mainStyles";
 import { ComponentExposedAttributes } from "./constants";
+import { ifDefined } from "lit/directives/if-defined.js";
 
 const INPUT_PLACEHOLDER = "YYYY/MM/DD - YYYY/MM/DD";
 
@@ -39,6 +40,12 @@ export class DateRangePickerWc extends LitElement {
 
   @property({ type: String, attribute: ComponentExposedAttributes.END_DATE })
   endDate?: string = undefined;
+
+  @property({ type: String, attribute: ComponentExposedAttributes.MIN_DATE })
+  minDate?: string = undefined;
+
+  @property({ type: String, attribute: ComponentExposedAttributes.MAX_DATE })
+  maxDate?: string = undefined;
 
   @property({
     type: String,
@@ -89,13 +96,38 @@ export class DateRangePickerWc extends LitElement {
     );
   }
 
+  // Date-only strings (e.g. "2024-01-15") are parsed as UTC midnight by spec,
+  // causing an off-by-one in UTC- timezones. Parse the fields directly for those,
+  // and strip the time component for full ISO strings so all comparisons use
+  // a consistent local midnight baseline.
+  private _toLocalMidnight(value: string): Date {
+    const dateOnly = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dateOnly) {
+      return new Date(+dateOnly[1], +dateOnly[2] - 1, +dateOnly[3]);
+    }
+    const d = new Date(value);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  get _parsedDates() {
+    return {
+      startDate: this.startDate ? this._toLocalMidnight(this.startDate) : null,
+      endDate: this.endDate ? this._toLocalMidnight(this.endDate) : null,
+      minDate: this.minDate ? this._toLocalMidnight(this.minDate) : null,
+      maxDate: this.maxDate ? this._toLocalMidnight(this.maxDate) : null,
+      mouseOveredDate: this._mouseOveredDate
+        ? this._toLocalMidnight(this._mouseOveredDate)
+        : null,
+    };
+  }
+
   get _currentSelectedDateDetails() {
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
     const currentMonthIndex = currentDate.getMonth();
     const currentDayNumber = currentDate.getDate();
 
-    const currentSelectedDate = new Date(this._currentSelectedDate);
+    const currentSelectedDate = this._toLocalMidnight(this._currentSelectedDate);
     const currentSelectedYear = currentSelectedDate.getFullYear();
     const currentSelectedMonthIndex = currentSelectedDate.getMonth();
     const currentSelectedMonthName =
@@ -252,19 +284,65 @@ export class DateRangePickerWc extends LitElement {
     const inputElem = event.target as HTMLInputElement;
 
     const [sY, sM, sD, eY, eM, eD] = this._segmentDigits;
-    const parsedStart = this._parseDateFromSegments(sY, sM, sD);
+    let parsedStart = this._parseDateFromSegments(sY, sM, sD);
     let parsedEnd = this._parseDateFromSegments(eY, eM, eD);
 
-    // Enforce end strictly after start; nudge end to start + 1 day if violated
-    if (parsedStart && parsedEnd && parsedEnd <= parsedStart) {
-      parsedEnd = new Date(parsedStart);
-      parsedEnd.setDate(parsedEnd.getDate() + 1);
+    const setStartDateSegmentDigits = () => {
+      if (!parsedStart) {
+        return;
+      }
+
+      this._segmentDigits[0] = String(parsedStart.getFullYear());
+      this._segmentDigits[1] = String(parsedStart.getMonth() + 1).padStart(
+        2,
+        "0",
+      );
+      this._segmentDigits[2] = String(parsedStart.getDate()).padStart(2, "0");
+    };
+
+    const setEndDateSegmentDigits = () => {
+      if (!parsedEnd) {
+        return;
+      }
+
       this._segmentDigits[3] = String(parsedEnd.getFullYear());
       this._segmentDigits[4] = String(parsedEnd.getMonth() + 1).padStart(
         2,
         "0",
       );
       this._segmentDigits[5] = String(parsedEnd.getDate()).padStart(2, "0");
+    };
+
+    const { minDate: minDateInDateFormat, maxDate: maxDateInDateFormat } =
+      this._parsedDates;
+
+    if (parsedStart) {
+      if (minDateInDateFormat && parsedStart < minDateInDateFormat) {
+        // If `parsedStart` is less than `minDate`, clamp it to `minDate`.
+        parsedStart = minDateInDateFormat;
+      } else if (maxDateInDateFormat && parsedStart > maxDateInDateFormat) {
+        parsedStart = maxDateInDateFormat;
+      }
+
+      setStartDateSegmentDigits();
+    }
+    if (parsedEnd) {
+      if (maxDateInDateFormat && parsedEnd > maxDateInDateFormat) {
+        // If `parsedEnd` is greater than `maxDate`, clamp it to `maxDate`.
+        parsedEnd = maxDateInDateFormat;
+      } else if (minDateInDateFormat && parsedEnd < minDateInDateFormat) {
+        parsedEnd = minDateInDateFormat;
+      }
+
+      setEndDateSegmentDigits();
+    }
+
+    // Enforce end strictly after start; nudge end to start + 1 day if violated
+    if (parsedStart && parsedEnd && parsedEnd < parsedStart) {
+      parsedEnd = new Date(parsedStart);
+      parsedEnd.setDate(parsedEnd.getDate() + 0);
+
+      setEndDateSegmentDigits();
     }
 
     // Clear segments for any invalid date directly — cannot rely on updated()
@@ -285,6 +363,10 @@ export class DateRangePickerWc extends LitElement {
     inputElem.value = anyDigits ? this._buildInputValue() : "";
 
     this.startDate = parsedStart ? parsedStart.toISOString() : undefined;
+
+    if (parsedEnd) {
+      parsedEnd.setHours(23, 59, 59, 999);
+    }
     this.endDate = parsedEnd ? parsedEnd.toISOString() : undefined;
   }
 
@@ -371,6 +453,56 @@ export class DateRangePickerWc extends LitElement {
       }
     };
     handleInvalidLabelFormatForDaysValue();
+
+    const enforceDateBoundaries = () => {
+      const relevantChanged =
+        _changedProperties.has("minDate") ||
+        _changedProperties.has("maxDate") ||
+        _changedProperties.has("startDate") ||
+        _changedProperties.has("endDate");
+
+      if (!relevantChanged) return;
+      if (!this.minDate && !this.maxDate) return;
+
+      // minDate/maxDate don't change during this function — safe to destructure once.
+      // startDate/endDate are mutated below, so they must be read via the getter
+      // at each use so mutations are reflected immediately.
+      const { minDate, maxDate } = this._parsedDates;
+
+      if (this.startDate) {
+        const start = this._parsedDates.startDate!;
+        if (minDate && start < minDate) {
+          this.startDate = minDate.toISOString();
+        } else if (maxDate && start > maxDate) {
+          this.startDate = maxDate.toISOString();
+        }
+      }
+
+      if (this.endDate) {
+        const end = this._parsedDates.endDate!;
+        if (maxDate && end > maxDate) {
+          const clamped = new Date(maxDate);
+          clamped.setHours(23, 59, 59, 999);
+          this.endDate = clamped.toISOString();
+        } else if (minDate && end < minDate) {
+          const clamped = new Date(minDate);
+          clamped.setHours(23, 59, 59, 999);
+          this.endDate = clamped.toISOString();
+        }
+      }
+
+      // Re-read via getter after clamping — reflects any mutations above.
+      if (this.startDate && this.endDate) {
+        const start = this._parsedDates.startDate!;
+        const end = this._parsedDates.endDate!;
+        if (end < start) {
+          const newEnd = new Date(start);
+          newEnd.setHours(23, 59, 59, 999);
+          this.endDate = newEnd.toISOString();
+        }
+      }
+    };
+    enforceDateBoundaries();
   }
 
   updated(changedProperties: PropertyValues): void {
@@ -382,7 +514,7 @@ export class DateRangePickerWc extends LitElement {
 
     if (hasStart) {
       if (this.startDate) {
-        const d = new Date(this.startDate);
+        const d = this._parsedDates.startDate!;
         this._segmentDigits[0] = String(d.getFullYear());
         this._segmentDigits[1] = String(d.getMonth() + 1).padStart(2, "0");
         this._segmentDigits[2] = String(d.getDate()).padStart(2, "0");
@@ -397,7 +529,7 @@ export class DateRangePickerWc extends LitElement {
 
     if (hasEnd) {
       if (this.endDate) {
-        const d = new Date(this.endDate);
+        const d = this._parsedDates.endDate!;
         this._segmentDigits[3] = String(d.getFullYear());
         this._segmentDigits[4] = String(d.getMonth() + 1).padStart(2, "0");
         this._segmentDigits[5] = String(d.getDate()).padStart(2, "0");
@@ -417,6 +549,13 @@ export class DateRangePickerWc extends LitElement {
   _renderCurrentMonthGrid() {
     const { currentDayNumber, startDayOfMonth, totalDaysInSelectedDate } =
       this._currentSelectedDateDetails;
+    const {
+      startDate: startDateInDateFormat,
+      endDate: endDateInDateFormat,
+      minDate: minDateInDateFormat,
+      maxDate: maxDateInDateFormat,
+      mouseOveredDate: mouseOveredDateInDateFormat,
+    } = this._parsedDates;
 
     return html`
       <div class="calendar-grid-wrapper">
@@ -460,16 +599,13 @@ export class DateRangePickerWc extends LitElement {
                 this._currentSelectedDateDetails.currentSelectedMonthIndex,
                 dayNumber,
               );
-              const mouseOveredDateInDateFormat = this._mouseOveredDate
-                ? new Date(this._mouseOveredDate)
-                : null;
-              const startDateInDateFormat = this.startDate
-                ? new Date(this.startDate)
-                : null;
-              const endDateInDateFormat = this.endDate
-                ? new Date(this.endDate)
-                : null;
-
+              const isCurrentCellDateLessThanMinDate =
+                minDateInDateFormat ? currentCellDate < minDateInDateFormat : false;
+              const isCurrentCellDateGreaterThanMaxDate =
+                maxDateInDateFormat ? currentCellDate > maxDateInDateFormat : false;
+              const shouldDisableCurrentCell =
+                isCurrentCellDateLessThanMinDate ||
+                isCurrentCellDateGreaterThanMaxDate;
               const isCurrentCellDateTodaysDate =
                 currentDayNumber === dayNumber &&
                 this._currentSelectedDateDetails.currentMonthIndex ===
@@ -619,6 +755,10 @@ export class DateRangePickerWc extends LitElement {
               })();
 
               const onCellClick = () => {
+                if (shouldDisableCurrentCell) {
+                  return;
+                }
+
                 const selectedDateToSet = new Date(
                   this._currentSelectedDateDetails.currentSelectedYear,
                   this._currentSelectedDateDetails.currentSelectedMonthIndex,
@@ -742,17 +882,25 @@ export class DateRangePickerWc extends LitElement {
                       enableMouseOverCellsHighlight &&
                       (isCurrentCellDateLastCellOfRow ||
                         isCurrentCellDateEndOfPreviewRange),
+                    "calendar-date-cell--disabled": shouldDisableCurrentCell,
                   })}
-                  @click=${onCellClick}
-                  @mouseover=${onCellMouseOver}
-                  @mouseout=${onCellMouseOut}
-                  tabindex="0"
-                  @keydown=${(event: KeyboardEvent) => {
-                    console.log({ event });
-                    if (["Space", "Enter"].includes(event?.code)) {
-                      onCellClick();
-                    }
-                  }}
+                  @click=${shouldDisableCurrentCell ? nothing : onCellClick}
+                  @mouseover=${shouldDisableCurrentCell
+                    ? nothing
+                    : onCellMouseOver}
+                  @mouseout=${shouldDisableCurrentCell
+                    ? nothing
+                    : onCellMouseOut}
+                  tabindex=${ifDefined(
+                    shouldDisableCurrentCell ? undefined : 0,
+                  )}
+                  @keydown=${shouldDisableCurrentCell
+                    ? nothing
+                    : (event: KeyboardEvent) => {
+                        if (["Space", "Enter"].includes(event?.code)) {
+                          onCellClick();
+                        }
+                      }}
                 >
                   ${dayNumber}
                 </div>
@@ -791,7 +939,7 @@ export class DateRangePickerWc extends LitElement {
         .calendar-date-cell--preview-range {
           position: relative;
         }
-        .calendar-date-cell--preview-range::before {
+        .calendar-date-cell--preview-range::after {
           position: absolute;
           content: "";
           top: 0;
@@ -801,14 +949,14 @@ export class DateRangePickerWc extends LitElement {
           border-top: 1px dashed ${unsafeCSS(this.rangePreviewBorderColor)};
           border-bottom: 1px dashed ${unsafeCSS(this.rangePreviewBorderColor)};
         }
-        .calendar-date-cell--preview-range-row-cell-first::before {
+        .calendar-date-cell--preview-range-row-cell-first::after {
           border-left: 1px dashed ${unsafeCSS(this.rangePreviewBorderColor)};
           border-top-left-radius: 1.5rem;
           border-bottom-left-radius: 1.5rem;
           border-top-right-radius: 0 !important;
           border-bottom-right-radius: 0 !important;
         }
-        .calendar-date-cell--preview-range-row-cell-last::before {
+        .calendar-date-cell--preview-range-row-cell-last::after {
           border-right: 1px dashed ${unsafeCSS(this.rangePreviewBorderColor)};
           border-top-right-radius: 1.5rem;
           border-bottom-right-radius: 1.5rem;
