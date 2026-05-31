@@ -1,5 +1,7 @@
 # Date Range Picker WC
 
+<img width="1297" height="1091" alt="date-range-picker-wc-usage-1" src="https://github.com/user-attachments/assets/63120a2a-5742-49f4-9502-66ff568e9bb1" />
+
 A lightweight, framework-agnostic date range picker. Built with the following modern techniques:
 
 - Web Components ([Lit](https://lit.dev/))
