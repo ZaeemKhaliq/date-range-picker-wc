@@ -478,7 +478,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 		if (!t && !n) return;
 		if (t) if (this.startDate) {
 			let e = new Date(this.startDate);
-			this._segmentDigits[0] = String(e.getFullYear()), this._segmentDigits[1] = String(e.getMonth() + 1).padStart(2, "0"), this._segmentDigits[2] = String(e.getDate()).padStart(2, "0");
+			this._segmentDigits[0] = String(e.getFullYear()), this._segmentDigits[1] = String(e.getMonth() + 1).padStart(2, "0"), this._segmentDigits[2] = String(e.getDate()).padStart(2, "0"), this._currentSelectedDate = this.startDate;
 		} else this._segmentDigits[0] = "", this._segmentDigits[1] = "", this._segmentDigits[2] = "";
 		if (n) if (this.endDate) {
 			let e = new Date(this.endDate);
@@ -517,7 +517,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
         </div>
 
         <div id="calendar-grid-days-container" class="calendar-grid">
-          ${Array.from({ length: t - 1 }).map(() => i`
+          ${Array.from({ length: t === 0 ? 6 : t - 1 }).map(() => i`
               <div class="calendar-grid-cell calendar-grid-cell--empty"></div>
             `)}
           ${Array.from({ length: n }).map((t, n) => {
@@ -792,7 +792,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
               </div>
 
               <slot
-                name="step-to-previous-month-button"
+                name="step-to-next-month-button"
                 @click=${this._moveToNextMonth}
               >
                 <button class="calendar-month-change-icon-container">

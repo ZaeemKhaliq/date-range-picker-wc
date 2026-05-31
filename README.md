@@ -64,7 +64,7 @@ For completely plain HTML pages — no bundler, no `npm`, no `type="module"` nee
 > **Note:** Remember to reflect the `date-range-picker-wc:on-date-select` event back onto the element. The component emits events but does not update its own `start-date` / `end-date` attributes.
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@zaeemk/date-range-picker-wc/dist/date-range-picker-w.iife.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zaeemk/date-range-picker-wc/dist/date-range-picker-wc.iife.js"></script>
 
 <date-range-picker-wc id="picker"></date-range-picker-wc>
 
@@ -150,16 +150,18 @@ These are the public attributes/properties of the `<date-range-picker-wc>` eleme
 
 ### `start-date`
 
-|                 |                                  |
-| --------------- | -------------------------------- |
-| **Type**        | `string` (ISO 8601 date string)  |
-| **Default**     | `undefined`                      |
-| **JS property** | `startDate`                      |
+|                 |                                 |
+| --------------- | ------------------------------- |
+| **Type**        | `string` (ISO 8601 date string) |
+| **Default**     | `undefined`                     |
+| **JS property** | `startDate`                     |
 
 The start date of the currently selected range, expressed as an ISO 8601 string (e.g. `"2024-01-15T00:00:00.000Z"`). Setting this causes the corresponding date to be highlighted in the calendar and reflected in the text input. Setting it to `undefined` or removing the attribute clears the start date.
 
 ```html
-<date-range-picker-wc start-date="2024-01-15T00:00:00.000Z"></date-range-picker-wc>
+<date-range-picker-wc
+  start-date="2024-01-15T00:00:00.000Z"
+></date-range-picker-wc>
 ```
 
 ```js
@@ -173,16 +175,18 @@ picker.startDate = undefined; // clear
 
 ### `end-date`
 
-|                 |                                  |
-| --------------- | -------------------------------- |
-| **Type**        | `string` (ISO 8601 date string)  |
-| **Default**     | `undefined`                      |
-| **JS property** | `endDate`                        |
+|                 |                                 |
+| --------------- | ------------------------------- |
+| **Type**        | `string` (ISO 8601 date string) |
+| **Default**     | `undefined`                     |
+| **JS property** | `endDate`                       |
 
 The end date of the currently selected range, expressed as an ISO 8601 string. Together with `start-date`, it defines the highlighted range in the calendar. If `end-date` is before or equal to `start-date` when entered via the text input, it is automatically nudged to `start-date + 1 day` on blur.
 
 ```html
-<date-range-picker-wc end-date="2024-01-31T00:00:00.000Z"></date-range-picker-wc>
+<date-range-picker-wc
+  end-date="2024-01-31T00:00:00.000Z"
+></date-range-picker-wc>
 ```
 
 ```js
@@ -205,7 +209,7 @@ Controls the format of the day-of-week column headers rendered in the calendar g
 | Value   | Header labels                     |
 | ------- | --------------------------------- |
 | `"ddd"` | Mon, Tue, Wed, Thu, Fri, Sat, Sun |
-| `"d"`   | M, T, W, T, F, S, S              |
+| `"d"`   | M, T, W, T, F, S, S               |
 
 Invalid values are silently reset to `"ddd"`.
 
@@ -226,7 +230,9 @@ Invalid values are silently reset to `"ddd"`.
 The color of the dashed border shown around the hover range preview — the visual indication of where the range would extend if the user clicks the currently hovered day. Accepts any valid CSS color string: hex, RGB, RGBA, HSL, or named colors.
 
 ```html
-<date-range-picker-wc range-preview-border-color="rgba(99,102,241,0.6)"></date-range-picker-wc>
+<date-range-picker-wc
+  range-preview-border-color="rgba(99,102,241,0.6)"
+></date-range-picker-wc>
 ```
 
 ---
@@ -297,7 +303,10 @@ Renders content to the left of the calendar inside the popover. Use this to add 
 
 ```html
 <date-range-picker-wc>
-  <div slot="left-sidebar" style="display:flex;flex-direction:column;gap:4px;padding-right:8px;">
+  <div
+    slot="left-sidebar"
+    style="display:flex;flex-direction:column;gap:4px;padding-right:8px;"
+  >
     <button>Last 7 days</button>
     <button>Last 30 days</button>
     <button>This month</button>
@@ -427,10 +436,10 @@ date-range-picker-wc::part(calendar-header) {
 
 Each individual day cell in the calendar grid. Additional part tokens are appended dynamically to reflect the cell's selection state, enabling conditional styling without extra class names:
 
-| Selector | When applied |
-| -------- | ------------ |
-| `::part(calendar-date-cell)` | Every day cell |
-| `::part(calendar-date-cell calendar-grid-cell--selected)` | The start date cell or end date cell |
+| Selector                                                     | When applied                                               |
+| ------------------------------------------------------------ | ---------------------------------------------------------- |
+| `::part(calendar-date-cell)`                                 | Every day cell                                             |
+| `::part(calendar-date-cell calendar-grid-cell--selected)`    | The start date cell or end date cell                       |
 | `::part(calendar-date-cell calendar-date-cell--highlighted)` | Cells that fall within the selected date range (inclusive) |
 
 ```css
@@ -506,16 +515,16 @@ picker.addEventListener("date-range-picker-wc:on-date-select", (e) => {
 
 ### Date Text Input
 
-| Key | Action |
-| --- | ------ |
-| `0`–`9` | Type a digit into the active date segment (YYYY, MM, or DD). The segment automatically advances to the next one once filled. |
-| `Backspace` | Delete the last typed digit in the current segment. If the segment is already empty, move focus to the previous segment. |
-| `ArrowLeft` | Move focus to the previous date segment. |
-| `ArrowRight` | Move focus to the next date segment. |
-| `Tab` | Default browser behavior — moves focus out of the input. |
+| Key          | Action                                                                                                                       |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `0`–`9`      | Type a digit into the active date segment (YYYY, MM, or DD). The segment automatically advances to the next one once filled. |
+| `Backspace`  | Delete the last typed digit in the current segment. If the segment is already empty, move focus to the previous segment.     |
+| `ArrowLeft`  | Move focus to the previous date segment.                                                                                     |
+| `ArrowRight` | Move focus to the next date segment.                                                                                         |
+| `Tab`        | Default browser behavior — moves focus out of the input.                                                                     |
 
 ### Calendar Grid
 
-| Key | Action |
-| --- | ------ |
+| Key               | Action                                                      |
+| ----------------- | ----------------------------------------------------------- |
 | `Space` / `Enter` | Select the focused day cell (same behavior as clicking it). |

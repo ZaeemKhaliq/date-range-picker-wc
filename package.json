@@ -1,6 +1,23 @@
 {
   "name": "@zaeemk/date-range-picker-wc",
   "version": "0.1.0",
+  "description": "A date range picker component made on web components (custom elements)",
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "date-range-picker",
+    "range-picker"
+  ],
+  "homepage": "https://github.com/ZaeemKhaliq/date-range-picker-wc#readme",
+  "bugs": {
+    "url": "https://github.com/ZaeemKhaliq/date-range-picker-wc/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZaeemKhaliq/date-range-picker-wc.git"
+  },
+  "license": "ISC",
+  "author": "Zaeem Khaliq",
   "type": "module",
   "scripts": {
     "dev": "vite",

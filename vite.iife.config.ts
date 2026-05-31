@@ -8,7 +8,7 @@ export default defineConfig({
       entry: resolve(__dirname, "src/date-range-picker-wc.ts"),
       name: "DateRangePickerWc",
       formats: ["iife"],
-      fileName: () => "date-range-picker-w.iife.js",
+      fileName: () => "date-range-picker-wc.iife.js",
     },
     emptyOutDir: false,
   },
