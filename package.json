@@ -1,6 +1,6 @@
 {
   "name": "@zaeemk/date-range-picker-wc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A date range picker component made on web components (custom elements)",
   "keywords": [
     "web-components",

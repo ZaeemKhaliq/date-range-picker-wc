@@ -14,6 +14,8 @@ A React wrapper is also exported via `@lit/react` for drop-in use in React appli
 
 Also provides customization possibilities (see [Available Slots](#available-slots) and [CSS parts](#styles-customization-with-css-part-selectors)).
 
+Live Demo: [CodeSandbox](https://codesandbox.io/p/sandbox/g4r2wx)
+
 > **Browser support:** Requires Popover API (Chrome 114+, Firefox 125+, Safari 17+) and CSS Anchor Positioning (Chrome 125+, Safari 18.2+).
 
 ---
@@ -200,11 +202,11 @@ picker.endDate = undefined; // clear
 
 ### `min-date`
 
-|                 |                                              |
-| --------------- | -------------------------------------------- |
+|                 |                                                 |
+| --------------- | ----------------------------------------------- |
 | **Type**        | `string` (ISO 8601 or `YYYY-MM-DD` date string) |
-| **Default**     | `undefined`                                  |
-| **JS property** | `minDate`                                    |
+| **Default**     | `undefined`                                     |
+| **JS property** | `minDate`                                       |
 
 Sets a lower boundary for selectable dates. Any day before this date is visually disabled in the calendar grid and cannot be clicked or keyboard-activated. When the user types a start date earlier than `min-date` in the text input, it is automatically clamped to `min-date` on blur.
 
@@ -215,8 +217,8 @@ All date comparisons are performed against local midnight, so date-only strings 
 ```
 
 ```js
-picker.minDate = "2024-01-01";   // set — accepts YYYY-MM-DD or full ISO string
-picker.minDate = undefined;       // clear
+picker.minDate = "2024-01-01"; // set — accepts YYYY-MM-DD or full ISO string
+picker.minDate = undefined; // clear
 ```
 
 > If `start-date` or `end-date` is already set to a value outside the `min-date`/`max-date` boundary when the boundary changes, it is automatically clamped to the nearest valid date in the same Lit update cycle — no user interaction is required.
@@ -225,11 +227,11 @@ picker.minDate = undefined;       // clear
 
 ### `max-date`
 
-|                 |                                              |
-| --------------- | -------------------------------------------- |
+|                 |                                                 |
+| --------------- | ----------------------------------------------- |
 | **Type**        | `string` (ISO 8601 or `YYYY-MM-DD` date string) |
-| **Default**     | `undefined`                                  |
-| **JS property** | `maxDate`                                    |
+| **Default**     | `undefined`                                     |
+| **JS property** | `maxDate`                                       |
 
 Sets an upper boundary for selectable dates. Any day after this date is visually disabled in the calendar grid and cannot be clicked or keyboard-activated. When the user types an end date later than `max-date` in the text input, it is automatically clamped to `max-date` on blur.
 
@@ -240,8 +242,8 @@ The end date is always stored with its time component set to `23:59:59.999` in l
 ```
 
 ```js
-picker.maxDate = "2024-12-31";   // set — accepts YYYY-MM-DD or full ISO string
-picker.maxDate = undefined;       // clear
+picker.maxDate = "2024-12-31"; // set — accepts YYYY-MM-DD or full ISO string
+picker.maxDate = undefined; // clear
 ```
 
 > `min-date` and `max-date` can be combined to restrict selection to a specific window:

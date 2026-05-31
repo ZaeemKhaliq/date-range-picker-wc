@@ -1,6 +1,8 @@
 declare const ComponentExposedAttributes: {
     START_DATE: string;
     END_DATE: string;
+    MIN_DATE: string;
+    MAX_DATE: string;
     LABEL_FORMAT_FOR_DAYS: string;
     RANGE_PREVIEW_BORDER_COLOR: string;
     HIDE_CLEAR_BUTTON: string;

@@ -8,6 +8,8 @@ export declare class DateRangePickerWc extends LitElement {
     _activeSegmentTypedCount: number;
     startDate?: string;
     endDate?: string;
+    minDate?: string;
+    maxDate?: string;
     labelFormatForDays: "ddd" | "d";
     rangePreviewBorderColor?: string;
     hideClearButton?: boolean;
@@ -17,6 +19,14 @@ export declare class DateRangePickerWc extends LitElement {
     _calendarGridDaysContainerElem: HTMLElement;
     _yearSelectorContainerPopoverElem: HTMLElement;
     private _emitCustomEvent;
+    private _toLocalMidnight;
+    get _parsedDates(): {
+        startDate: Date | null;
+        endDate: Date | null;
+        minDate: Date | null;
+        maxDate: Date | null;
+        mouseOveredDate: Date | null;
+    };
     get _currentSelectedDateDetails(): {
         currentYear: number;
         currentMonthIndex: number;

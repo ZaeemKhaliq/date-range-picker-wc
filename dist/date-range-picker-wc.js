@@ -4,14 +4,17 @@ import { LitElement as n, css as r, html as i, nothing as a, unsafeCSS as o } fr
 import { customElement as s, property as c, query as l, state as u } from "lit/decorators.js";
 import { classMap as d } from "lit/directives/class-map.js";
 import { createRef as f, ref as p } from "lit/directives/ref.js";
+import { ifDefined as m } from "lit/directives/if-defined.js";
 //#region src/constants.ts
-var m = {
+var h = {
 	START_DATE: "start-date",
 	END_DATE: "end-date",
+	MIN_DATE: "min-date",
+	MAX_DATE: "max-date",
 	LABEL_FORMAT_FOR_DAYS: "label-format-for-days",
 	RANGE_PREVIEW_BORDER_COLOR: "range-preview-border-color",
 	HIDE_CLEAR_BUTTON: "hide-clear-button"
-}, h = { ON_DATE_SELECT: "date-range-picker-wc:on-date-select" }, g = {
+}, g = { ON_DATE_SELECT: "date-range-picker-wc:on-date-select" }, _ = {
 	0: "January",
 	1: "February",
 	2: "March",
@@ -24,7 +27,7 @@ var m = {
 	9: "October",
 	10: "November",
 	11: "December"
-}, _ = {
+}, v = {
 	d: {
 		MONDAY: "M",
 		TUESDAY: "T",
@@ -43,7 +46,7 @@ var m = {
 		SATURDAY: "Sat",
 		SUNDAY: "Sun"
 	}
-}, v = r`
+}, y = r`
   *,
   *::before,
   *::after {
@@ -213,7 +216,7 @@ var m = {
     transition: all 0.15s ease;
   }
   .calendar-grid-cell:focus {
-    border: 1px solid black;
+    outline: 2px solid black;
   }
   .calendar-grid-cell:hover {
     background-color: rgba(0, 0, 0, 0.1);
@@ -259,6 +262,11 @@ var m = {
     border-bottom-right-radius: 1.5rem;
   }
 
+  .calendar-date-cell--disabled {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
   .clear-button-container {
     padding: 8px;
     display: flex;
@@ -270,6 +278,7 @@ var m = {
     font-weight: 700;
     cursor: pointer;
     font-size: 0.875rem;
+    border: 1px solid transparent;
   }
   .clear-selections-button:focus {
     border: 1px solid black;
@@ -321,7 +330,7 @@ var m = {
 `;
 //#endregion
 //#region \0@oxc-project+runtime@0.132.0/helpers/decorate.js
-function y(e, t, n, r) {
+function b(e, t, n, r) {
 	var i = arguments.length, a = i < 3 ? t : r === null ? r = Object.getOwnPropertyDescriptor(t, n) : r, o;
 	if (typeof Reflect == "object" && typeof Reflect.decorate == "function") a = Reflect.decorate(e, t, n, r);
 	else for (var s = e.length - 1; s >= 0; s--) (o = e[s]) && (a = (i < 3 ? o(a) : i > 3 ? o(t, n, a) : o(t, n)) || a);
@@ -329,7 +338,7 @@ function y(e, t, n, r) {
 }
 //#endregion
 //#region src/date-range-picker-wc.ts
-var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
+var x = "YYYY/MM/DD - YYYY/MM/DD", S = [
 	{
 		start: 0,
 		end: 4,
@@ -366,7 +375,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 		length: 2,
 		placeholder: "DD"
 	}
-], S = class extends n {
+], C = class extends n {
 	constructor(...e) {
 		super(...e), this.calendarPopoverRef = f(), this._segmentDigits = [
 			"",
@@ -375,10 +384,10 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 			"",
 			"",
 			""
-		], this._activeSegmentIdx = -1, this._activeSegmentTypedCount = 0, this.startDate = void 0, this.endDate = void 0, this.labelFormatForDays = "ddd", this.rangePreviewBorderColor = "black", this.hideClearButton = !1, this._currentSelectedDate = this.startDate || (/* @__PURE__ */ new Date()).toISOString(), this._mouseOveredDate = void 0;
+		], this._activeSegmentIdx = -1, this._activeSegmentTypedCount = 0, this.startDate = void 0, this.endDate = void 0, this.minDate = void 0, this.maxDate = void 0, this.labelFormatForDays = "ddd", this.rangePreviewBorderColor = "black", this.hideClearButton = !1, this._currentSelectedDate = this.startDate || (/* @__PURE__ */ new Date()).toISOString(), this._mouseOveredDate = void 0;
 	}
 	static {
-		this.styles = [v];
+		this.styles = [y];
 	}
 	_emitCustomEvent({ name: e, detail: t }) {
 		this.dispatchEvent(new CustomEvent(e, {
@@ -387,15 +396,30 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 			detail: t
 		}));
 	}
+	_toLocalMidnight(e) {
+		let t = e.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+		if (t) return new Date(+t[1], t[2] - 1, +t[3]);
+		let n = new Date(e);
+		return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+	}
+	get _parsedDates() {
+		return {
+			startDate: this.startDate ? this._toLocalMidnight(this.startDate) : null,
+			endDate: this.endDate ? this._toLocalMidnight(this.endDate) : null,
+			minDate: this.minDate ? this._toLocalMidnight(this.minDate) : null,
+			maxDate: this.maxDate ? this._toLocalMidnight(this.maxDate) : null,
+			mouseOveredDate: this._mouseOveredDate ? this._toLocalMidnight(this._mouseOveredDate) : null
+		};
+	}
 	get _currentSelectedDateDetails() {
-		let e = /* @__PURE__ */ new Date(), t = e.getFullYear(), n = e.getMonth(), r = e.getDate(), i = new Date(this._currentSelectedDate), a = i.getFullYear(), o = i.getMonth();
+		let e = /* @__PURE__ */ new Date(), t = e.getFullYear(), n = e.getMonth(), r = e.getDate(), i = this._toLocalMidnight(this._currentSelectedDate), a = i.getFullYear(), o = i.getMonth();
 		return {
 			currentYear: t,
 			currentMonthIndex: n,
 			currentDayNumber: r,
 			currentSelectedYear: a,
 			currentSelectedMonthIndex: o,
-			currentSelectedMonthName: g[o],
+			currentSelectedMonthName: _[o],
 			startDayOfMonth: new Date(i.setDate(1)).getDay(),
 			totalDaysInSelectedDate: new Date(a, o + 1, 0).getDate()
 		};
@@ -421,19 +445,19 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 		return `${e(t, 4, "YYYY")}/${e(n, 2, "MM")}/${e(r, 2, "DD")} - ${e(i, 4, "YYYY")}/${e(a, 2, "MM")}/${e(o, 2, "DD")}`;
 	}
 	_getSegmentIndex(e) {
-		for (let t = 0; t < x.length; t++) {
-			let n = x[t];
+		for (let t = 0; t < S.length; t++) {
+			let n = S[t];
 			if (e >= n.start && e < n.end) return t;
 		}
-		for (let t = 0; t < x.length; t++) if (e < x[t].start) return t;
-		return x.length - 1;
+		for (let t = 0; t < S.length; t++) if (e < S[t].start) return t;
+		return S.length - 1;
 	}
 	_getFirstIncompleteSegmentIndex() {
-		for (let e = 0; e < x.length; e++) if (this._segmentDigits[e].length < x[e].length) return e;
+		for (let e = 0; e < S.length; e++) if (this._segmentDigits[e].length < S[e].length) return e;
 		return 0;
 	}
 	_setSelection(e, t) {
-		let n = x[t];
+		let n = S[t];
 		requestAnimationFrame(() => {
 			e.setSelectionRange(n.start, n.end);
 		});
@@ -451,8 +475,12 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 		t.value ||= this._buildInputValue(), this._activateSegment(t, this._getFirstIncompleteSegmentIndex());
 	}
 	_handleInputBlur(e) {
-		let t = e.target, [n, r, i, a, o, s] = this._segmentDigits, c = this._parseDateFromSegments(n, r, i), l = this._parseDateFromSegments(a, o, s);
-		c && l && l <= c && (l = new Date(c), l.setDate(l.getDate() + 1), this._segmentDigits[3] = String(l.getFullYear()), this._segmentDigits[4] = String(l.getMonth() + 1).padStart(2, "0"), this._segmentDigits[5] = String(l.getDate()).padStart(2, "0")), c || (this._segmentDigits[0] = "", this._segmentDigits[1] = "", this._segmentDigits[2] = ""), l || (this._segmentDigits[3] = "", this._segmentDigits[4] = "", this._segmentDigits[5] = ""), t.value = this._segmentDigits.some((e) => e.length > 0) ? this._buildInputValue() : "", this.startDate = c ? c.toISOString() : void 0, this.endDate = l ? l.toISOString() : void 0;
+		let t = e.target, [n, r, i, a, o, s] = this._segmentDigits, c = this._parseDateFromSegments(n, r, i), l = this._parseDateFromSegments(a, o, s), u = () => {
+			c && (this._segmentDigits[0] = String(c.getFullYear()), this._segmentDigits[1] = String(c.getMonth() + 1).padStart(2, "0"), this._segmentDigits[2] = String(c.getDate()).padStart(2, "0"));
+		}, d = () => {
+			l && (this._segmentDigits[3] = String(l.getFullYear()), this._segmentDigits[4] = String(l.getMonth() + 1).padStart(2, "0"), this._segmentDigits[5] = String(l.getDate()).padStart(2, "0"));
+		}, { minDate: f, maxDate: p } = this._parsedDates;
+		c && (f && c < f ? c = f : p && c > p && (c = p), u()), l && (p && l > p ? l = p : f && l < f && (l = f), d()), c && l && l < c && (l = new Date(c), l.setDate(l.getDate() + 0), d()), c || (this._segmentDigits[0] = "", this._segmentDigits[1] = "", this._segmentDigits[2] = ""), l || (this._segmentDigits[3] = "", this._segmentDigits[4] = "", this._segmentDigits[5] = ""), t.value = this._segmentDigits.some((e) => e.length > 0) ? this._buildInputValue() : "", this.startDate = c ? c.toISOString() : void 0, l && l.setHours(23, 59, 59, 999), this.endDate = l ? l.toISOString() : void 0;
 	}
 	_handleInputClick(e) {
 		let t = e.target;
@@ -465,23 +493,47 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 		let t = e.target, n = t.selectionStart ?? 0, r = this._getSegmentIndex(n);
 		if (/^[0-9]$/.test(e.key)) {
 			e.preventDefault();
-			let n = x[r];
-			this._activeSegmentTypedCount === 0 ? this._segmentDigits[r] = e.key : this._segmentDigits[r] = (this._segmentDigits[r] + e.key).slice(-n.length), this._activeSegmentTypedCount++, t.value = this._buildInputValue(), this._activeSegmentTypedCount >= n.length && r < x.length - 1 ? this._activateSegment(t, r + 1) : this._setSelection(t, r);
-		} else e.key === "Backspace" ? (e.preventDefault(), this._activeSegmentTypedCount > 0 ? (this._segmentDigits[r] = this._segmentDigits[r].slice(0, -1), this._activeSegmentTypedCount--, t.value = this._buildInputValue(), this._setSelection(t, r)) : r > 0 ? this._activateSegment(t, r - 1) : this._setSelection(t, r)) : e.key === "ArrowLeft" ? (e.preventDefault(), this._activateSegment(t, Math.max(0, r - 1))) : e.key === "ArrowRight" ? (e.preventDefault(), this._activateSegment(t, Math.min(x.length - 1, r + 1))) : e.preventDefault();
+			let n = S[r];
+			this._activeSegmentTypedCount === 0 ? this._segmentDigits[r] = e.key : this._segmentDigits[r] = (this._segmentDigits[r] + e.key).slice(-n.length), this._activeSegmentTypedCount++, t.value = this._buildInputValue(), this._activeSegmentTypedCount >= n.length && r < S.length - 1 ? this._activateSegment(t, r + 1) : this._setSelection(t, r);
+		} else e.key === "Backspace" ? (e.preventDefault(), this._activeSegmentTypedCount > 0 ? (this._segmentDigits[r] = this._segmentDigits[r].slice(0, -1), this._activeSegmentTypedCount--, t.value = this._buildInputValue(), this._setSelection(t, r)) : r > 0 ? this._activateSegment(t, r - 1) : this._setSelection(t, r)) : e.key === "ArrowLeft" ? (e.preventDefault(), this._activateSegment(t, Math.max(0, r - 1))) : e.key === "ArrowRight" ? (e.preventDefault(), this._activateSegment(t, Math.min(S.length - 1, r + 1))) : e.preventDefault();
 	}
 	willUpdate(e) {
-		super.willUpdate(e), e.has("labelFormatForDays") && (Object.keys(_).includes(this.labelFormatForDays) || (this.labelFormatForDays = "ddd"));
+		super.willUpdate(e), e.has("labelFormatForDays") && (Object.keys(v).includes(this.labelFormatForDays) || (this.labelFormatForDays = "ddd")), (() => {
+			if (!(e.has("minDate") || e.has("maxDate") || e.has("startDate") || e.has("endDate")) || !this.minDate && !this.maxDate) return;
+			let { minDate: t, maxDate: n } = this._parsedDates;
+			if (this.startDate) {
+				let e = this._parsedDates.startDate;
+				t && e < t ? this.startDate = t.toISOString() : n && e > n && (this.startDate = n.toISOString());
+			}
+			if (this.endDate) {
+				let e = this._parsedDates.endDate;
+				if (n && e > n) {
+					let e = new Date(n);
+					e.setHours(23, 59, 59, 999), this.endDate = e.toISOString();
+				} else if (t && e < t) {
+					let e = new Date(t);
+					e.setHours(23, 59, 59, 999), this.endDate = e.toISOString();
+				}
+			}
+			if (this.startDate && this.endDate) {
+				let e = this._parsedDates.startDate;
+				if (this._parsedDates.endDate < e) {
+					let t = new Date(e);
+					t.setHours(23, 59, 59, 999), this.endDate = t.toISOString();
+				}
+			}
+		})();
 	}
 	updated(e) {
 		super.updated(e);
 		let t = e.has("startDate"), n = e.has("endDate");
 		if (!t && !n) return;
 		if (t) if (this.startDate) {
-			let e = new Date(this.startDate);
+			let e = this._parsedDates.startDate;
 			this._segmentDigits[0] = String(e.getFullYear()), this._segmentDigits[1] = String(e.getMonth() + 1).padStart(2, "0"), this._segmentDigits[2] = String(e.getDate()).padStart(2, "0"), this._currentSelectedDate = this.startDate;
 		} else this._segmentDigits[0] = "", this._segmentDigits[1] = "", this._segmentDigits[2] = "";
 		if (n) if (this.endDate) {
-			let e = new Date(this.endDate);
+			let e = this._parsedDates.endDate;
 			this._segmentDigits[3] = String(e.getFullYear()), this._segmentDigits[4] = String(e.getMonth() + 1).padStart(2, "0"), this._segmentDigits[5] = String(e.getDate()).padStart(2, "0");
 		} else this._segmentDigits[3] = "", this._segmentDigits[4] = "", this._segmentDigits[5] = "";
 		if (!this._dateInputFieldElem) return;
@@ -489,30 +541,30 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 		this._dateInputFieldElem.value = r ? this._buildInputValue() : "";
 	}
 	_renderCurrentMonthGrid() {
-		let { currentDayNumber: e, startDayOfMonth: t, totalDaysInSelectedDate: n } = this._currentSelectedDateDetails;
+		let { currentDayNumber: e, startDayOfMonth: t, totalDaysInSelectedDate: n } = this._currentSelectedDateDetails, { startDate: r, endDate: o, minDate: s, maxDate: c, mouseOveredDate: l } = this._parsedDates;
 		return i`
       <div class="calendar-grid-wrapper">
         <div class="calendar-grid">
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].MONDAY}
+            ${v[this.labelFormatForDays].MONDAY}
           </div>
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].TUESDAY}
+            ${v[this.labelFormatForDays].TUESDAY}
           </div>
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].WEDNESDAY}
+            ${v[this.labelFormatForDays].WEDNESDAY}
           </div>
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].THURSDAY}
+            ${v[this.labelFormatForDays].THURSDAY}
           </div>
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].FRIDAY}
+            ${v[this.labelFormatForDays].FRIDAY}
           </div>
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].SATURDAY}
+            ${v[this.labelFormatForDays].SATURDAY}
           </div>
           <div class="calendar-grid-cell calendar-grid-cell--column-cell">
-            ${_[this.labelFormatForDays].SUNDAY}
+            ${v[this.labelFormatForDays].SUNDAY}
           </div>
         </div>
 
@@ -521,28 +573,29 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
               <div class="calendar-grid-cell calendar-grid-cell--empty"></div>
             `)}
           ${Array.from({ length: n }).map((t, n) => {
-			let r = n + 1, a = new Date(this._currentSelectedDateDetails.currentSelectedYear, this._currentSelectedDateDetails.currentSelectedMonthIndex, r), o = this._mouseOveredDate ? new Date(this._mouseOveredDate) : null, s = this.startDate ? new Date(this.startDate) : null, c = this.endDate ? new Date(this.endDate) : null, l = e === r && this._currentSelectedDateDetails.currentMonthIndex === this._currentSelectedDateDetails.currentSelectedMonthIndex && this._currentSelectedDateDetails.currentSelectedYear === this._currentSelectedDateDetails.currentYear, u = (() => {
+			let u = n + 1, f = new Date(this._currentSelectedDateDetails.currentSelectedYear, this._currentSelectedDateDetails.currentSelectedMonthIndex, u), p = (s ? f < s : !1) || (c ? f > c : !1), h = e === u && this._currentSelectedDateDetails.currentMonthIndex === this._currentSelectedDateDetails.currentSelectedMonthIndex && this._currentSelectedDateDetails.currentSelectedYear === this._currentSelectedDateDetails.currentYear, g = (() => {
 				if (!this.startDate && !this.endDate) return !1;
-				let e = s, t = e?.getFullYear?.(), n = e?.getMonth?.(), i = e?.getDate?.(), a = c, o = a?.getFullYear?.(), l = a?.getMonth?.(), u = a?.getDate?.(), d = t === this._currentSelectedDateDetails.currentSelectedYear && n === this._currentSelectedDateDetails.currentSelectedMonthIndex && r === i, f = o === this._currentSelectedDateDetails.currentSelectedYear && l === this._currentSelectedDateDetails.currentSelectedMonthIndex && r === u;
+				let e = r, t = e?.getFullYear?.(), n = e?.getMonth?.(), i = e?.getDate?.(), a = o, s = a?.getFullYear?.(), c = a?.getMonth?.(), l = a?.getDate?.(), d = t === this._currentSelectedDateDetails.currentSelectedYear && n === this._currentSelectedDateDetails.currentSelectedMonthIndex && u === i, f = s === this._currentSelectedDateDetails.currentSelectedYear && c === this._currentSelectedDateDetails.currentSelectedMonthIndex && u === l;
 				return d || f;
-			})(), f = a.getTime() === s?.getTime?.(), p = a.getTime() === c?.getTime?.(), m = a.getDay() === 1, h = a.getDay() === 0, g = (() => {
-				if (s && c) {
-					if (!o) return !1;
-					if (o > c) return a.getTime() === c.getTime();
-					if (o < s) return a.getTime() === o.getTime();
+			})(), _ = f.getTime() === r?.getTime?.(), v = f.getTime() === o?.getTime?.(), y = f.getDay() === 1, b = f.getDay() === 0, x = (() => {
+				if (r && o) {
+					if (!l) return !1;
+					if (l > o) return f.getTime() === o.getTime();
+					if (l < r) return f.getTime() === l.getTime();
 				}
-				return s ? a.getTime() === s.getTime() : !1;
-			})(), _ = (() => {
-				if (!o) return !1;
-				if (s && c) {
-					if (o > c) return a.getTime() === o.getTime();
-					if (o < s) return a.getTime() === s.getTime();
+				return r ? f.getTime() === r.getTime() : !1;
+			})(), S = (() => {
+				if (!l) return !1;
+				if (r && o) {
+					if (l > o) return f.getTime() === l.getTime();
+					if (l < r) return f.getTime() === r.getTime();
 				}
-				return a.getTime() === o.getTime();
-			})(), v = !s || !c ? !1 : a >= s && a <= c, y = !o || !s ? !1 : s && c ? o > c ? a >= c && a <= o : o < s ? a <= s && a >= o : !1 : s && o > s ? a >= s && a <= o : !1, b = () => {
-				let e = new Date(this._currentSelectedDateDetails.currentSelectedYear, this._currentSelectedDateDetails.currentSelectedMonthIndex, r), t = e.toISOString();
-				if (s && c) {
-					if (v) {
+				return f.getTime() === l.getTime();
+			})(), C = !r || !o ? !1 : f >= r && f <= o, w = !l || !r ? !1 : r && o ? l > o ? f >= o && f <= l : l < r ? f <= r && f >= l : !1 : r && l > r ? f >= r && f <= l : !1, T = () => {
+				if (p) return;
+				let e = new Date(this._currentSelectedDateDetails.currentSelectedYear, this._currentSelectedDateDetails.currentSelectedMonthIndex, u), t = e.toISOString();
+				if (r && o) {
+					if (C) {
 						this.startDate = t, this.endDate = void 0, this._emitCustomEvent({
 							name: "date-range-picker-wc:on-date-select",
 							detail: {
@@ -552,7 +605,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 						});
 						return;
 					}
-					if (e < s) {
+					if (e < r) {
 						this.startDate = t, this._emitCustomEvent({
 							name: "date-range-picker-wc:on-date-select",
 							detail: {
@@ -562,7 +615,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 						});
 						return;
 					}
-					if (e > c) {
+					if (e > o) {
 						this.endDate = t, this._emitCustomEvent({
 							name: "date-range-picker-wc:on-date-select",
 							detail: {
@@ -573,7 +626,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 						return;
 					}
 				}
-				if (!s) {
+				if (!r) {
 					this.startDate = t, this._emitCustomEvent({
 						name: "date-range-picker-wc:on-date-select",
 						detail: {
@@ -583,7 +636,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 					});
 					return;
 				}
-				if (e < s) {
+				if (e < r) {
 					this.startDate = t, this._emitCustomEvent({
 						name: "date-range-picker-wc:on-date-select",
 						detail: {
@@ -603,31 +656,32 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
 			};
 			return i`
                 <div
-                  part=${`calendar-date-cell${u ? " calendar-grid-cell--selected" : ""}${v ? " calendar-date-cell--highlighted" : ""}`}
+                  part=${`calendar-date-cell${g ? " calendar-grid-cell--selected" : ""}${C ? " calendar-date-cell--highlighted" : ""}`}
                   class=${d({
 				"calendar-grid-cell": !0,
-				"calendar-grid-cell--current-day": l,
-				"calendar-grid-cell--selected": u,
-				"calendar-date-cell--highlighted": v,
-				"calendar-date-cell--highlighted-row-cell-first": v && (m || f),
-				"calendar-date-cell--highlighted-row-cell-last": v && (h || p),
-				"calendar-date-cell--preview-range": y,
-				"calendar-date-cell--preview-range-row-cell-first": y && (m || g),
-				"calendar-date-cell--preview-range-row-cell-last": y && (h || _)
+				"calendar-grid-cell--current-day": h,
+				"calendar-grid-cell--selected": g,
+				"calendar-date-cell--highlighted": C,
+				"calendar-date-cell--highlighted-row-cell-first": C && (y || _),
+				"calendar-date-cell--highlighted-row-cell-last": C && (b || v),
+				"calendar-date-cell--preview-range": w,
+				"calendar-date-cell--preview-range-row-cell-first": w && (y || x),
+				"calendar-date-cell--preview-range-row-cell-last": w && (b || S),
+				"calendar-date-cell--disabled": p
 			})}
-                  @click=${b}
-                  @mouseover=${() => {
-				this._mouseOveredDate = a.toISOString();
+                  @click=${p ? a : T}
+                  @mouseover=${p ? a : () => {
+				this._mouseOveredDate = f.toISOString();
 			}}
-                  @mouseout=${() => {
+                  @mouseout=${p ? a : () => {
 				this._mouseOveredDate = void 0;
 			}}
-                  tabindex="0"
-                  @keydown=${(e) => {
-				console.log({ event: e }), ["Space", "Enter"].includes(e?.code) && b();
+                  tabindex=${m(p ? void 0 : 0)}
+                  @keydown=${p ? a : (e) => {
+				["Space", "Enter"].includes(e?.code) && T();
 			}}
                 >
-                  ${r}
+                  ${u}
                 </div>
               `;
 		})}
@@ -653,7 +707,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
         .calendar-date-cell--preview-range {
           position: relative;
         }
-        .calendar-date-cell--preview-range::before {
+        .calendar-date-cell--preview-range::after {
           position: absolute;
           content: "";
           top: 0;
@@ -663,14 +717,14 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
           border-top: 1px dashed ${o(this.rangePreviewBorderColor)};
           border-bottom: 1px dashed ${o(this.rangePreviewBorderColor)};
         }
-        .calendar-date-cell--preview-range-row-cell-first::before {
+        .calendar-date-cell--preview-range-row-cell-first::after {
           border-left: 1px dashed ${o(this.rangePreviewBorderColor)};
           border-top-left-radius: 1.5rem;
           border-bottom-left-radius: 1.5rem;
           border-top-right-radius: 0 !important;
           border-bottom-right-radius: 0 !important;
         }
-        .calendar-date-cell--preview-range-row-cell-last::before {
+        .calendar-date-cell--preview-range-row-cell-last::after {
           border-right: 1px dashed ${o(this.rangePreviewBorderColor)};
           border-top-right-radius: 1.5rem;
           border-bottom-right-radius: 1.5rem;
@@ -687,7 +741,7 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
               inputmode="numeric"
               class="date-input-field"
               part="date-input-field"
-              placeholder=${b}
+              placeholder=${x}
               @focus=${this._handleInputFocus}
               @blur=${this._handleInputBlur}
               @click=${this._handleInputClick}
@@ -834,29 +888,35 @@ var b = "YYYY/MM/DD - YYYY/MM/DD", x = [
     `;
 	}
 };
-y([c({
+b([c({
 	type: String,
-	attribute: m.START_DATE
-})], S.prototype, "startDate", void 0), y([c({
+	attribute: h.START_DATE
+})], C.prototype, "startDate", void 0), b([c({
 	type: String,
-	attribute: m.END_DATE
-})], S.prototype, "endDate", void 0), y([c({
+	attribute: h.END_DATE
+})], C.prototype, "endDate", void 0), b([c({
 	type: String,
-	attribute: m.LABEL_FORMAT_FOR_DAYS
-})], S.prototype, "labelFormatForDays", void 0), y([c({
+	attribute: h.MIN_DATE
+})], C.prototype, "minDate", void 0), b([c({
 	type: String,
-	attribute: m.RANGE_PREVIEW_BORDER_COLOR
-})], S.prototype, "rangePreviewBorderColor", void 0), y([c({
+	attribute: h.MAX_DATE
+})], C.prototype, "maxDate", void 0), b([c({
+	type: String,
+	attribute: h.LABEL_FORMAT_FOR_DAYS
+})], C.prototype, "labelFormatForDays", void 0), b([c({
+	type: String,
+	attribute: h.RANGE_PREVIEW_BORDER_COLOR
+})], C.prototype, "rangePreviewBorderColor", void 0), b([c({
 	type: Boolean,
-	attribute: m.HIDE_CLEAR_BUTTON
-})], S.prototype, "hideClearButton", void 0), y([u()], S.prototype, "_currentSelectedDate", void 0), y([u()], S.prototype, "_mouseOveredDate", void 0), y([l(".date-input-field")], S.prototype, "_dateInputFieldElem", void 0), y([l("#calendar-grid-days-container")], S.prototype, "_calendarGridDaysContainerElem", void 0), y([l("#year-selector-container")], S.prototype, "_yearSelectorContainerPopoverElem", void 0), S = y([s("date-range-picker-wc")], S);
+	attribute: h.HIDE_CLEAR_BUTTON
+})], C.prototype, "hideClearButton", void 0), b([u()], C.prototype, "_currentSelectedDate", void 0), b([u()], C.prototype, "_mouseOveredDate", void 0), b([l(".date-input-field")], C.prototype, "_dateInputFieldElem", void 0), b([l("#calendar-grid-days-container")], C.prototype, "_calendarGridDaysContainerElem", void 0), b([l("#year-selector-container")], C.prototype, "_yearSelectorContainerPopoverElem", void 0), C = b([s("date-range-picker-wc")], C);
 //#endregion
 //#region src/index.ts
-var C = t({
+var w = t({
 	tagName: "date-range-picker-wc",
-	elementClass: S,
+	elementClass: C,
 	react: e,
-	events: { onDateSelect: h.ON_DATE_SELECT }
+	events: { onDateSelect: g.ON_DATE_SELECT }
 });
 //#endregion
-export { S as DateRangePickerWc, C as DateRangePickerWcReact };
+export { C as DateRangePickerWc, w as DateRangePickerWcReact };
